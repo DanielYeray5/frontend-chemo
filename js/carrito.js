@@ -57,7 +57,7 @@ function generarFactura(nombre, correo, carrito, total) {
         -------------------------
         Nombre: ${nombre}
         Correo: ${correo}
-        Empresa: Chemo Autos
+        Empresa: SuperCars
 
         Productos:
         ${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}
@@ -72,7 +72,7 @@ function generarFactura(nombre, correo, carrito, total) {
 
 // Asegurarse de que el carrito se vacíe correctamente al descargar la factura
 function generarArchivoFactura(nombre, correo, carrito, total) {
-    const factura = `Factura\n-------------------------\nNombre: ${nombre}\nCorreo: ${correo}\nEmpresa: Chemo Autos\n\nProductos:\n${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}\n\nTotal: $${total.toLocaleString('es-MX')} MXN\n-------------------------\n¡Gracias por tu compra!`;
+    const factura = `Factura\n-------------------------\nNombre: ${nombre}\nCorreo: ${correo}\nEmpresa: SuperCars\n\nProductos:\n${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}\n\nTotal: $${total.toLocaleString('es-MX')} MXN\n-------------------------\n¡Gracias por tu compra!`;
 
     const blob = new Blob([factura], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
