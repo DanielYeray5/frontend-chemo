@@ -1,6 +1,18 @@
 // Array para almacenar los productos en el carrito
 let carrito = [];
 
+// Reemplazar alertas con elementos HTML estilizados
+function mostrarAlerta(mensaje, tipo) {
+    const alerta = document.createElement('div');
+    alerta.className = `alerta alerta-${tipo}`; // Clase basada en el tipo de alerta
+    alerta.textContent = mensaje;
+    document.body.appendChild(alerta);
+
+    setTimeout(() => {
+        alerta.remove();
+    }, 3000); // Eliminar la alerta después de 3 segundos
+}
+
 // Modificar la función enviarProductoAlServidor para manejar errores
 function enviarProductoAlServidor(producto) {
     fetch('http://localhost:3000/carrito', {
@@ -21,7 +33,7 @@ function enviarProductoAlServidor(producto) {
     })
     .catch(error => {
         console.error('Error al enviar el producto al servidor:', error);
-        alert('Error: No se pudo agregar el producto al carrito.');
+        mostrarAlerta('⚠️ Error: No se pudo agregar el producto al carrito.', 'error');
     });
 }
 
@@ -39,7 +51,7 @@ function agregarAlCarrito(boton) {
     console.log('Carrito actual:', carrito);
     actualizarCarrito();
     enviarProductoAlServidor(producto);
-    alert(`Has agregado el producto: ${producto.name} al carrito de compras.`);
+    mostrarAlerta(`Has agregado el producto: ${producto.name} al carrito de compras.`, 'success');
 }
 
 // Función para mostrar el carrito al pasar el cursor

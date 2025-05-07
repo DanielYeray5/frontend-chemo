@@ -67,7 +67,7 @@ function generarFactura(nombre, correo, carrito, total) {
         ¡Gracias por tu compra!
     `;
     console.log(factura);
-    alert(factura);
+    mostrarAlerta(factura, 'info');
 }
 
 // Asegurarse de que el carrito se vacíe correctamente al descargar la factura
@@ -100,7 +100,7 @@ function generarArchivoFactura(nombre, correo, carrito, total) {
 // Verificar si el carrito está vacío antes de confirmar la compra
 document.getElementById('confirmar-compra').addEventListener('click', () => {
     if (carrito.length === 0) {
-        alert('El carrito está vacío. Agrega productos antes de confirmar la compra.');
+        mostrarAlerta('El carrito está vacío. Agrega productos antes de confirmar la compra.', 'error');
         return;
     }
 
@@ -108,7 +108,7 @@ document.getElementById('confirmar-compra').addEventListener('click', () => {
     const correo = document.getElementById('correo').value;
 
     if (!nombre || !correo) {
-        alert('Por favor, completa el registro con tu nombre y correo antes de confirmar la compra.');
+        mostrarAlerta('Por favor, completa el registro con tu nombre y correo antes de confirmar la compra.', 'error');
         return;
     }
 
@@ -125,7 +125,7 @@ document.getElementById('form-registro').addEventListener('submit', (event) => {
     event.preventDefault();
     const nombre = document.getElementById('nombre').value;
     const correo = document.getElementById('correo').value;
-    alert(`Registro exitoso para: ${nombre} (${correo})`);
+    mostrarAlerta(`Registro exitoso para: ${nombre} (${correo})`, 'success');
     // Aquí puedes agregar lógica adicional para enviar los datos al servidor
 });
 
@@ -147,6 +147,18 @@ document.getElementById('otra-compra').addEventListener('click', () => {
     })
     .catch(error => {
         console.error('Error al vaciar el carrito:', error);
-        alert('Error: No se pudo vaciar el carrito.');
+        mostrarAlerta('⚠️ Error: No se pudo agregar el producto al carrito.', 'error');
     });
 });
+
+// Reemplazar alertas con elementos HTML estilizados
+function mostrarAlerta(mensaje, tipo) {
+    const alerta = document.createElement('div');
+    alerta.className = `alerta alerta-${tipo}`; // Clase basada en el tipo de alerta
+    alerta.textContent = mensaje;
+    document.body.appendChild(alerta);
+
+    setTimeout(() => {
+        alerta.remove();
+    }, 3000); // Eliminar la alerta después de 3 segundos
+}
