@@ -54,18 +54,6 @@ function agregarAlCarrito(boton) {
     mostrarAlerta(`Has agregado el producto: ${producto.name} al carrito de compras.`, 'success');
 }
 
-// Función para mostrar el carrito al pasar el cursor
-function mostrarCarrito() {
-    const carritoDesplegable = document.getElementById('carrito-desplegable');
-    carritoDesplegable.classList.remove('oculto');
-}
-
-// Función para ocultar el carrito cuando se quita el cursor
-function ocultarCarrito() {
-    const carritoDesplegable = document.getElementById('carrito-desplegable');
-    carritoDesplegable.classList.add('oculto');
-}
-
 // Función para actualizar la lista del carrito
 function actualizarCarrito() {
     const listaCarrito = document.getElementById('lista-carrito');
@@ -98,4 +86,44 @@ document.addEventListener('DOMContentLoaded', () => {
             agregarAlCarrito(boton);
         });
     });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Obtener los modelos desde el backend
+    fetch('http://localhost:3000/cars')
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Error al obtener los modelos desde el servidor.');
+            }
+            return response.json();
+        })
+        .then(modelos => {
+            const modelosGrid = document.getElementById('modelos-grid');
+            modelosGrid.innerHTML = '';
+
+            modelos.forEach(modelo => {
+                const modeloDiv = document.createElement('div');
+                modeloDiv.className = 'modelo';
+                modeloDiv.innerHTML = `
+                    <img src="${modelo.image}" alt="${modelo.name}">
+                    <div class="modelo-info">
+                        <h3>${modelo.name}</h3>
+                        <p>${modelo.description}</p>
+                        <p>Precio: $${modelo.price.toLocaleString('es-MX')} MXN</p>
+                        <button class="btn-comprar">Comprar</button>
+                    </div>
+                `;
+                modelosGrid.appendChild(modeloDiv);
+
+                // Agregar evento al botón de comprar
+                const boton = modeloDiv.querySelector('.btn-comprar');
+                boton.addEventListener('click', () => {
+                    agregarAlCarrito(boton);
+                });
+            });
+        })
+        .catch(error => {
+            console.error('Error al cargar los modelos:', error);
+            mostrarAlerta('⚠️ Error al cargar los modelos.', 'error');
+        });
 });
