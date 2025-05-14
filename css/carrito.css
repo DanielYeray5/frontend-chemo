@@ -114,6 +114,8 @@ header nav ul li a:hover {
 .carrito-lista li {
     padding: 1rem;
     border-bottom: 1px solid #ddd;
+    position: relative;
+    overflow: hidden;
 }
 
 .carrito-lista li:last-child {
@@ -181,4 +183,27 @@ button:hover {
     10% { opacity: 1; transform: translateY(0); }
     90% { opacity: 1; transform: translateY(0); }
     100% { opacity: 0; transform: translateY(-10px); }
+}
+
+/* Botón eliminar producto en carrito */
+.btn-eliminar-producto {
+    background-color: #dc3545 !important;
+    color: #fff !important;
+    border: none;
+    padding: 6px 14px;
+    border-radius: 4px;
+    font-size: 15px;
+    cursor: pointer;
+    float: right;
+    margin-left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.2s;
+}
+.btn-eliminar-producto i {
+    font-size: 16px;
+}
+.btn-eliminar-producto:hover {
+    background-color: #b52a37 !important;
 }

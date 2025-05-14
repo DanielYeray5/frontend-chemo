@@ -32,19 +32,57 @@ function actualizarCarritoEnPantalla(carrito) {
         totalCarrito.textContent = '0';
     } else {
         let total = 0;
-        carrito.forEach(producto => {
+        carrito.forEach((producto, index) => {
             const item = document.createElement('li');
-            const precio = producto.price || 0; // Manejar casos donde el precio no esté definido
+            const precio = producto.price || 0;
             item.innerHTML = `
                 <strong>Modelo:</strong> ${producto.name || 'Desconocido'} <br>
                 <strong>Descripción:</strong> ${producto.description || 'Sin descripción'} <br>
                 <strong>Precio:</strong> $${precio.toLocaleString('es-MX')} MXN
             `;
+            // Botón para eliminar producto
+            const btnEliminar = document.createElement('button');
+            btnEliminar.innerHTML = '<i class="fas fa-trash-alt"></i> Eliminar';
+            btnEliminar.className = 'btn-eliminar-producto';
+            btnEliminar.style.backgroundColor = '#dc3545'; // Rojo
+            btnEliminar.style.color = '#fff';
+            btnEliminar.style.marginLeft = '16px';
+            btnEliminar.style.float = 'right';
+            btnEliminar.onclick = function() {
+                eliminarProductoDelCarrito(index);
+            };
+            item.appendChild(document.createElement('br'));
+            item.appendChild(btnEliminar);
             listaCarrito.appendChild(item);
             total += precio;
         });
         totalCarrito.textContent = total.toLocaleString('es-MX');
     }
+}
+
+function eliminarProductoDelCarrito(index) {
+    // Eliminar producto del array local
+    carrito.splice(index, 1);
+    // Actualizar en el servidor
+    fetch('http://localhost:3000/carrito', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(carrito)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('No se pudo eliminar el producto del carrito en el servidor.');
+        }
+        return response.json();
+    })
+    .then(() => {
+        actualizarCarritoEnPantalla(carrito);
+        mostrarAlerta('Producto eliminado del carrito.', 'success');
+    })
+    .catch(error => {
+        console.error('Error al eliminar producto del carrito:', error);
+        mostrarAlerta('⚠️ Error: No se pudo eliminar el producto del carrito.', 'error');
+    });
 }
 
 // Llamar a la función para obtener el carrito al cargar la página
