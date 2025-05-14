@@ -40,18 +40,41 @@ function enviarProductoAlServidor(producto) {
 // Modificar la función para enviar un objeto completo al carrito
 function agregarAlCarrito(boton) {
     const modeloDiv = boton.parentElement;
-    const producto = {
-        name: modeloDiv.querySelector('h3').textContent,
-        description: modeloDiv.querySelector('p').textContent,
-        price: parseFloat(modeloDiv.querySelector('p:nth-of-type(2)').textContent.replace(/[^0-9.-]+/g, ''))
-    };
+    const name = modeloDiv.querySelector('h3').textContent;
+    const description = modeloDiv.querySelector('p').textContent;
+    const price = parseFloat(modeloDiv.querySelector('p:nth-of-type(2)').textContent.replace(/[^0-9.-]+/g, ''));
 
-    carrito.push(producto);
-    console.log(`Producto agregado:`, producto);
-    console.log('Carrito actual:', carrito);
-    actualizarCarrito();
-    enviarProductoAlServidor(producto);
-    mostrarAlerta(`Has agregado el producto: ${producto.name} al carrito de compras.`, 'success');
+    // Consultar el stock actualizado desde la base de datos antes de agregar
+    fetch(`http://localhost:3000/cars?name=${encodeURIComponent(name)}`)
+        .then(response => {
+            if (!response.ok) throw new Error('No se pudo validar el stock en la base de datos.');
+            return response.json();
+        })
+        .then(data => {
+            const modeloBD = Array.isArray(data) ? data[0] : data;
+            if (!modeloBD || typeof modeloBD.stock === 'undefined') {
+                mostrarAlerta('No se pudo obtener el stock del producto.', 'error');
+                return;
+            }
+            const stock = modeloBD.stock;
+            let productoEnCarrito = carrito.find(p => p.name === name);
+            if (productoEnCarrito) {
+                if ((productoEnCarrito.cantidad || 1) + 1 > stock) {
+                    mostrarAlerta(`No puedes agregar más de ${stock} unidades de ${name}.`, 'error');
+                    return;
+                }
+                productoEnCarrito.cantidad = (productoEnCarrito.cantidad || 1) + 1;
+            } else {
+                carrito.push({ name, description, price, stock, cantidad: 1 });
+            }
+            actualizarCarrito();
+            enviarProductoAlServidor({ name, description, price, stock, cantidad: productoEnCarrito ? productoEnCarrito.cantidad : 1 });
+            mostrarAlerta(`Has agregado el producto: ${name} al carrito de compras.`, 'success');
+        })
+        .catch(error => {
+            console.error('Error al validar stock:', error);
+            mostrarAlerta('⚠️ Error al validar el stock en la base de datos.', 'error');
+        });
 }
 
 // Función para actualizar la lista del carrito
@@ -110,6 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <h3>${modelo.name}</h3>
                         <p>${modelo.description}</p>
                         <p>Precio: $${modelo.price.toLocaleString('es-MX')} MXN</p>
+                        <p class="stock-info">Stock disponible: <strong>${modelo.stock}</strong></p>
                         <button class="btn-comprar">Comprar</button>
                     </div>
                 `;

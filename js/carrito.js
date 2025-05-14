@@ -30,15 +30,19 @@ function actualizarCarritoEnPantalla(carrito) {
         item.textContent = 'No hay productos en el carrito';
         listaCarrito.appendChild(item);
         totalCarrito.textContent = '0';
+        // Mostrar también subtotal e IVA en 0
+        mostrarSubtotalYIVA(0, 0);
     } else {
         let total = 0;
         carrito.forEach((producto, index) => {
             const item = document.createElement('li');
             const precio = producto.price || 0;
+            const cantidad = producto.cantidad || 1;
             item.innerHTML = `
                 <strong>Modelo:</strong> ${producto.name || 'Desconocido'} <br>
                 <strong>Descripción:</strong> ${producto.description || 'Sin descripción'} <br>
-                <strong>Precio:</strong> $${precio.toLocaleString('es-MX')} MXN
+                <strong>Precio:</strong> $${precio.toLocaleString('es-MX')} MXN <br>
+                <strong>Cantidad:</strong> ${cantidad}
             `;
             // Botón para eliminar producto
             const btnEliminar = document.createElement('button');
@@ -54,10 +58,27 @@ function actualizarCarritoEnPantalla(carrito) {
             item.appendChild(document.createElement('br'));
             item.appendChild(btnEliminar);
             listaCarrito.appendChild(item);
-            total += precio;
+            total += precio * cantidad;
         });
-        totalCarrito.textContent = total.toLocaleString('es-MX');
+        totalCarrito.textContent = (total * 1.16).toLocaleString('es-MX'); // Mostrar total con IVA
+        mostrarSubtotalYIVA(total, total * 0.16);
     }
+}
+
+// Función para mostrar el subtotal y el IVA en pantalla
+function mostrarSubtotalYIVA(subtotal, iva) {
+    let subtotalDiv = document.getElementById('carrito-subtotal-iva');
+    if (!subtotalDiv) {
+        subtotalDiv = document.createElement('div');
+        subtotalDiv.id = 'carrito-subtotal-iva';
+        subtotalDiv.style.marginTop = '8px';
+        const totalDiv = document.querySelector('.carrito-total');
+        totalDiv.parentNode.insertBefore(subtotalDiv, totalDiv);
+    }
+    subtotalDiv.innerHTML = `
+        <strong>Subtotal:</strong> $${subtotal.toLocaleString('es-MX')} MXN<br>
+        <strong>IVA (16%):</strong> $${iva.toLocaleString('es-MX')} MXN
+    `;
 }
 
 function eliminarProductoDelCarrito(index) {
@@ -93,6 +114,8 @@ function generarFactura(nombre, correo, carrito, total) {
     const factura = `
         Factura
         -------------------------
+        Fecha: ${new Date().toLocaleDateString('es-MX')}
+        Hora: ${new Date().toLocaleTimeString('es-MX')}
         Nombre: ${nombre}
         Correo: ${correo}
         Empresa: SuperCars
@@ -110,7 +133,12 @@ function generarFactura(nombre, correo, carrito, total) {
 
 // Asegurarse de que el carrito se vacíe correctamente al descargar la factura
 function generarArchivoFactura(nombre, correo, carrito, total) {
-    const factura = `Factura\n-------------------------\nNombre: ${nombre}\nCorreo: ${correo}\nEmpresa: SuperCars\n\nProductos:\n${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}\n\nTotal: $${total.toLocaleString('es-MX')} MXN\n-------------------------\n¡Gracias por tu compra!`;
+    const fecha = new Date().toLocaleDateString('es-MX');
+    const hora = new Date().toLocaleTimeString('es-MX');
+    const subtotal = total;
+    const iva = subtotal * 0.16;
+    const totalConIVA = subtotal + iva;
+    const factura = `Factura\n-------------------------\nFecha: ${fecha}\nHora: ${hora}\nNombre: ${nombre}\nCorreo: ${correo}\nEmpresa: SuperCars\n\nProductos:\n${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}\n\nSubtotal: $${subtotal.toLocaleString('es-MX')} MXN\nIVA (16%): $${iva.toLocaleString('es-MX')} MXN\nTotal: $${totalConIVA.toLocaleString('es-MX')} MXN\n-------------------------\n¡Gracias por tu compra!`;
 
     const blob = new Blob([factura], { type: 'text/plain' });
     const url = URL.createObjectURL(blob);
@@ -135,10 +163,35 @@ function generarArchivoFactura(nombre, correo, carrito, total) {
     });
 }
 
+// Validar stock antes de confirmar la compra (con cantidad)
+function validarStockCarrito(carrito) {
+    for (const producto of carrito) {
+        if (producto.stock === undefined) {
+            mostrarAlerta(`No se puede validar el stock de ${producto.name}.`, 'error');
+            return false;
+        }
+        // Si el producto tiene una propiedad cantidad, validar contra el stock
+        const cantidad = producto.cantidad || 1;
+        if (producto.stock < cantidad) {
+            mostrarAlerta(`No puedes comprar ${cantidad} unidades de ${producto.name}. Solo hay ${producto.stock} disponibles.`, 'error');
+            return false;
+        }
+        if (producto.stock <= 0) {
+            mostrarAlerta(`No hay stock disponible para: ${producto.name}`, 'error');
+            return false;
+        }
+    }
+    return true;
+}
+
 // Verificar si el carrito está vacío antes de confirmar la compra
 document.getElementById('confirmar-compra').addEventListener('click', () => {
     if (carrito.length === 0) {
         mostrarAlerta('El carrito está vacío. Agrega productos antes de confirmar la compra.', 'error');
+        return;
+    }
+
+    if (!validarStockCarrito(carrito)) {
         return;
     }
 
@@ -150,12 +203,32 @@ document.getElementById('confirmar-compra').addEventListener('click', () => {
         return;
     }
 
-    const total = carrito.reduce((sum, producto) => sum + producto.price, 0);
-    generarArchivoFactura(nombre, correo, carrito, total);
+    const subtotal = carrito.reduce((sum, producto) => sum + producto.price, 0);
+    const iva = subtotal * 0.16;
+    const totalConIVA = subtotal + iva;
+    generarArchivoFactura(nombre, correo, carrito, subtotal);
 
-    // Vaciar el carrito
-    carrito = [];
-    actualizarCarritoEnPantalla(carrito);
+    // Enviar la compra al backend para actualizar el stock
+    fetch('http://localhost:3000/confirmar-compra', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, correo, carrito })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('No se pudo confirmar la compra y actualizar el stock.');
+        }
+        return response.json();
+    })
+    .then(() => {
+        carrito = [];
+        actualizarCarritoEnPantalla(carrito);
+        mostrarAlerta('¡Compra confirmada y stock actualizado!', 'success');
+    })
+    .catch(error => {
+        console.error('Error al confirmar la compra:', error);
+        mostrarAlerta('⚠️ Error: No se pudo confirmar la compra ni actualizar el stock.', 'error');
+    });
 });
 
 // Agregar preventDefault al formulario de registro
