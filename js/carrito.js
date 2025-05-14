@@ -224,6 +224,9 @@ document.getElementById('confirmar-compra').addEventListener('click', () => {
         carrito = [];
         actualizarCarritoEnPantalla(carrito);
         mostrarAlerta('¡Compra confirmada y stock actualizado!', 'success');
+        setTimeout(() => {
+            window.location.href = 'modelos.html';
+        }, 1200); // Redirige después de mostrar la alerta
     })
     .catch(error => {
         console.error('Error al confirmar la compra:', error);
