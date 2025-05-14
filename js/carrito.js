@@ -151,6 +151,28 @@ document.getElementById('otra-compra').addEventListener('click', () => {
     });
 });
 
+// Funcionalidad para el botón 'Vaciar Carrito'
+document.getElementById('vaciar-carrito').addEventListener('click', () => {
+    fetch('http://localhost:3000/carrito', {
+        method: 'DELETE'
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('No se pudo vaciar el carrito en el servidor.');
+        }
+        return response.json();
+    })
+    .then(() => {
+        carrito = []; // Vaciar el carrito localmente
+        actualizarCarritoEnPantalla(carrito); // Actualizar la vista del carrito
+        mostrarAlerta('El carrito ha sido vaciado.', 'success');
+    })
+    .catch(error => {
+        console.error('Error al vaciar el carrito:', error);
+        mostrarAlerta('⚠️ Error: No se pudo vaciar el carrito.', 'error');
+    });
+});
+
 // Reemplazar alertas con elementos HTML estilizados
 function mostrarAlerta(mensaje, tipo) {
     const alerta = document.createElement('div');

@@ -151,8 +151,9 @@ button:hover {
 /* Estilo para las alertas personalizadas */
 .alerta {
     position: fixed;
+    left: 50%;
+    right: unset;
     top: 20px;
-    right: 20px;
     padding: 15px;
     border-radius: 5px;
     font-size: 16px;
@@ -160,6 +161,7 @@ button:hover {
     z-index: 1000;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
     animation: fadeInOut 3s ease-in-out;
+    transform: translateX(-50%);
 }
 
 .alerta-info {
