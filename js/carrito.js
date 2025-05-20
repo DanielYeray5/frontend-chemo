@@ -109,60 +109,6 @@ function eliminarProductoDelCarrito(index) {
 // Llamar a la función para obtener el carrito al cargar la página
 document.addEventListener('DOMContentLoaded', obtenerCarritoDelServidor);
 
-// Función para generar una factura
-function generarFactura(nombre, correo, carrito, total) {
-    const factura = `
-        Factura
-        -------------------------
-        Fecha: ${new Date().toLocaleDateString('es-MX')}
-        Hora: ${new Date().toLocaleTimeString('es-MX')}
-        Nombre: ${nombre}
-        Correo: ${correo}
-        Empresa: SuperCars
-
-        Productos:
-        ${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}
-
-        Total: $${total.toLocaleString('es-MX')} MXN
-        -------------------------
-        ¡Gracias por tu compra!
-    `;
-    console.log(factura);
-    mostrarAlerta(factura, 'info');
-}
-
-// Asegurarse de que el carrito se vacíe correctamente al descargar la factura
-function generarArchivoFactura(nombre, correo, carrito, total) {
-    const fecha = new Date().toLocaleDateString('es-MX');
-    const hora = new Date().toLocaleTimeString('es-MX');
-    const subtotal = total;
-    const iva = subtotal * 0.16;
-    const totalConIVA = subtotal + iva;
-    const factura = `Factura\n-------------------------\nFecha: ${fecha}\nHora: ${hora}\nNombre: ${nombre}\nCorreo: ${correo}\nEmpresa: SuperCars\n\nProductos:\n${carrito.map(producto => `- ${producto.name}: $${producto.price.toLocaleString('es-MX')} MXN`).join('\n')}\n\nSubtotal: $${subtotal.toLocaleString('es-MX')} MXN\nIVA (16%): $${iva.toLocaleString('es-MX')} MXN\nTotal: $${totalConIVA.toLocaleString('es-MX')} MXN\n-------------------------\n¡Gracias por tu compra!`;
-
-    const blob = new Blob([factura], { type: 'text/plain' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = 'factura.txt';
-    link.textContent = 'Descargar Factura';
-    link.classList.add('btn-descargar');
-
-    const graciasDiv = document.getElementById('gracias-compra');
-    graciasDiv.innerHTML = '<h2>¡Gracias por tu compra!</h2>';
-    graciasDiv.appendChild(link);
-    graciasDiv.style.display = 'block';
-
-    document.getElementById('carrito-seccion').style.display = 'none';
-    document.getElementById('registro-seccion').style.display = 'none';
-
-    // Vaciar el carrito al hacer clic en el enlace de descarga
-    link.addEventListener('click', () => {
-        carrito.length = 0; // Vaciar el array del carrito
-        actualizarCarritoEnPantalla(carrito);
-    });
-}
-
 // Validar stock antes de confirmar la compra (con cantidad)
 function validarStockCarrito(carrito) {
     for (const producto of carrito) {
@@ -186,47 +132,37 @@ function validarStockCarrito(carrito) {
 
 // Verificar si el carrito está vacío antes de confirmar la compra
 document.getElementById('confirmar-compra').addEventListener('click', () => {
-    if (carrito.length === 0) {
-        mostrarAlerta('El carrito está vacío. Agrega productos antes de confirmar la compra.', 'error');
-        return;
-    }
-
-    if (!validarStockCarrito(carrito)) {
-        return;
-    }
-
-    const nombre = document.getElementById('nombre').value;
-    const correo = document.getElementById('correo').value;
+    const nombre = document.getElementById('nombre').value.trim();
+    const correo = document.getElementById('correo').value.trim();
 
     if (!nombre || !correo) {
         mostrarAlerta('Por favor, completa el registro con tu nombre y correo antes de confirmar la compra.', 'error');
         return;
     }
 
-    const subtotal = carrito.reduce((sum, producto) => sum + producto.price, 0);
-    const iva = subtotal * 0.16;
-    const totalConIVA = subtotal + iva;
-    generarArchivoFactura(nombre, correo, carrito, subtotal);
+    // Guardar datos en localStorage para la factura
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+    localStorage.setItem('nombre', nombre);
+    localStorage.setItem('correo', correo);
 
     // Enviar la compra al backend para actualizar el stock
     fetch('http://localhost:3000/confirmar-compra', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre, correo, carrito })
+        body: JSON.stringify({
+            nombre: nombre,
+            correo: correo,
+            carrito: carrito
+        })
     })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('No se pudo confirmar la compra y actualizar el stock.');
+    .then(async response => {
+        const data = await response.json();
+        if (data.correoEnviado) {
+            mostrarAlerta('¡Factura enviada correctamente a tu correo!', 'success');
+        } else {
+            mostrarAlerta('La compra fue exitosa, pero no se pudo enviar la factura por correo.', 'error');
         }
-        return response.json();
-    })
-    .then(() => {
-        carrito = [];
-        actualizarCarritoEnPantalla(carrito);
-        mostrarAlerta('¡Compra confirmada y stock actualizado!', 'success');
-        setTimeout(() => {
-            window.location.href = 'modelos.html';
-        }, 1200); // Redirige después de mostrar la alerta
+        window.location.href = 'gracias.html';
     })
     .catch(error => {
         console.error('Error al confirmar la compra:', error);

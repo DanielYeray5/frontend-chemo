@@ -23,11 +23,6 @@ function inicializarBotonesCarrito() {
 // Inicializar los botones al cargar la página
 document.addEventListener('DOMContentLoaded', inicializarBotonesCarrito);
 
-// Ejemplo de uso: agregar productos al carrito
-// Puedes conectar esta función a botones en tu HTML
-agregarAlCarrito('Modelo 1');
-agregarAlCarrito('Modelo 2');
-
 // Función para mostrar/ocultar el carrito desplegable
 function toggleCarrito() {
     const carritoDesplegable = document.getElementById('carrito-desplegable');
@@ -74,4 +69,50 @@ document.addEventListener('DOMContentLoaded', () => {
     const menuCarrito = document.querySelector('.menu-carrito');
     menuCarrito.addEventListener('mouseenter', mostrarCarrito);
     menuCarrito.addEventListener('mouseleave', ocultarCarrito);
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const grid = document.querySelector('.modelos-grid');
+    if (!grid) return;
+
+    // Obtener autos desde el backend
+    let autos = [];
+    try {
+        const res = await fetch('http://localhost:3000/cars');
+        autos = await res.json();
+    } catch (e) {
+        grid.innerHTML = '<p style="color:red">No se pudieron cargar los autos.</p>';
+        return;
+    }
+
+    function mostrarAleatorios() {
+        grid.innerHTML = '';
+        // Seleccionar 3 autos aleatorios
+        const seleccionados = autos.sort(() => 0.5 - Math.random()).slice(0, 3);
+        seleccionados.forEach((auto, i) => {
+            const div = document.createElement('div');
+            div.className = 'modelo animado';
+            div.style.animationDelay = `${i * 0.2}s`;
+            // Usar la propiedad 'image' directamente si existe
+            let imgFile = auto.image;
+            // Si la imagen empieza con /images/ quitar el primer slash para que funcione en frontend
+            if (imgFile && imgFile.startsWith('/images/')) {
+                imgFile = imgFile.substring(1); // quita el primer /
+            }
+            // Si la imagen es una URL absoluta, úsala tal cual
+            let imgSrc = imgFile && (imgFile.startsWith('http://') || imgFile.startsWith('https://'))
+                ? imgFile
+                : (imgFile ? imgFile : 'images/default.jpg');
+            div.innerHTML = `
+                <img src="${imgSrc}" alt="${auto.name}">
+                <h3>${auto.name}</h3>
+                <p>Año: ${auto.year || ''}</p>
+                <p>Precio: $${auto.price ? auto.price.toLocaleString('es-MX') : ''} MXN</p>
+            `;
+            grid.appendChild(div);
+        });
+    }
+
+    mostrarAleatorios();
+    setInterval(mostrarAleatorios, 4000);
 });
