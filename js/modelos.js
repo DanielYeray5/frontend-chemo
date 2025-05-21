@@ -121,26 +121,10 @@ document.addEventListener('DOMContentLoaded', () => {
             return response.json();
         })
         .then(modelos => {
-            const modelosGrid = document.getElementById('modelos-grid');
-            modelosGrid.innerHTML = '';
-
-            modelos.forEach(modelo => {
-                const modeloDiv = document.createElement('div');
-                modeloDiv.className = 'modelo';
-                modeloDiv.innerHTML = `
-                    <img src="${modelo.image}" alt="${modelo.name}">
-                    <div class="modelo-info">
-                        <h3>${modelo.name}</h3>
-                        <p>${modelo.description}</p>
-                        <p>Precio: $${modelo.price.toLocaleString('es-MX')} MXN</p>
-                        <p class="stock-info">Stock disponible: <strong>${modelo.stock}</strong></p>
-                        <button class="btn-comprar">Comprar</button>
-                    </div>
-                `;
-                modelosGrid.appendChild(modeloDiv);
-
-                // Agregar evento al botón de comprar
-                const boton = modeloDiv.querySelector('.btn-comprar');
+            renderizarModelos(modelos);
+            // Asignar eventos a los botones después de renderizar
+            const botones = document.querySelectorAll('.modelo .btn-comprar');
+            botones.forEach(boton => {
                 boton.addEventListener('click', () => {
                     agregarAlCarrito(boton);
                 });
@@ -151,3 +135,28 @@ document.addEventListener('DOMContentLoaded', () => {
             mostrarAlerta('⚠️ Error al cargar los modelos.', 'error');
         });
 });
+
+// Renderizar solo nombre, imagen y precio, sin mostrar stock
+function renderizarModelos(modelos) {
+    const grid = document.getElementById('modelos-grid');
+    grid.innerHTML = '';
+    modelos.forEach(auto => {
+        let imgFile = auto.image;
+        if (imgFile && imgFile.startsWith('/images/')) {
+            imgFile = imgFile.substring(1);
+        }
+        let imgSrc = imgFile && (imgFile.startsWith('http://') || imgFile.startsWith('https://'))
+            ? imgFile
+            : (imgFile ? imgFile : 'images/default.jpg');
+        const div = document.createElement('div');
+        div.className = 'modelo';
+        div.innerHTML = `
+            <img src="${imgSrc}" alt="${auto.name}">
+            <h3>${auto.name}</h3>
+            <p>Año: ${auto.year || ''}</p>
+            <p>Precio: $${auto.price ? auto.price.toLocaleString('es-MX') : ''} MXN</p>
+            <button class="btn-comprar">Agregar al carrito</button>
+        `;
+        grid.appendChild(div);
+    });
+}

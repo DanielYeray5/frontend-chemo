@@ -40,7 +40,7 @@ function actualizarCarritoEnPantalla(carrito) {
             const cantidad = producto.cantidad || 1;
             item.innerHTML = `
                 <strong>Modelo:</strong> ${producto.name || 'Desconocido'} <br>
-                <strong>Descripción:</strong> ${producto.description || 'Sin descripción'} <br>
+                <strong>Año:</strong> ${producto.year || ''} <br>
                 <strong>Precio:</strong> $${precio.toLocaleString('es-MX')} MXN <br>
                 <strong>Cantidad:</strong> ${cantidad}
             `;
