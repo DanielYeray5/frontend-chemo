@@ -17,6 +17,24 @@ document.getElementById('descargar-factura').addEventListener('click', () => {
     factura += `\nSubtotal: $${subtotal.toLocaleString('es-MX')} MXN`;
     factura += `\nIVA (16%): $${iva.toLocaleString('es-MX')} MXN`;
     factura += `\nTotal: $${total.toLocaleString('es-MX')} MXN`;
+    // --- Merma ---
+    const causas = [
+        'Daño en transporte',
+        'Error de inventario',
+        'Robo parcial',
+        'Desgaste por exhibición',
+        'Falla mecánica',
+        'Pérdida administrativa',
+        'Devolución defectuosa',
+        'Accidente en traslado',
+        'Pérdida por clima',
+        'Error de proveedor'
+    ];
+    const merma = Math.floor(Math.random() * 10) + 1;
+    const causa = causas[Math.floor(Math.random() * causas.length)];
+    factura += `\n\nMerma:`;
+    factura += `\nCantidad: ${merma}`;
+    factura += `\nCausa probable: ${causa}`;
     factura += `\n\n¡Gracias por tu compra en SuperCars!`;
 
     const blob = new Blob([factura], { type: 'text/plain' });
